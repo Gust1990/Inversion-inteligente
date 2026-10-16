@@ -13,8 +13,10 @@
             --text-muted: #94a3b8;
             --neon-green: #4ade80;
             --neon-red: #f87171;
+            --neon-blue: #60a5fa;
             --btn-green: rgba(74, 222, 128, 0.2);
             --btn-red: rgba(248, 113, 113, 0.2);
+            --btn-blue: rgba(96, 165, 250, 0.2);
         }
 
         * {
@@ -67,6 +69,16 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         /* Stats Globales */
         .stats-grid {
             display: grid;
@@ -97,7 +109,7 @@
         .text-green { color: var(--neon-green); text-shadow: 0 0 8px rgba(74,222,128,0.4); }
         .text-red { color: var(--neon-red); text-shadow: 0 0 8px rgba(248,113,113,0.4); }
 
-        /* Calculadora */
+        /* Inputs */
         .input-group {
             margin-bottom: 15px;
         }
@@ -125,96 +137,105 @@
             border-color: var(--text-muted);
         }
 
-        .calc-results {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .result-item {
-            text-align: center;
-            flex: 1;
-        }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        button {
+        .btn-full {
+            width: 100%;
             padding: 15px;
-            border: 1px solid var(--border-color);
+            background: var(--btn-blue);
+            border: 1px solid var(--neon-blue);
+            color: white;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            color: white;
+            margin-top: 10px;
             transition: all 0.2s;
         }
 
-        .btn-win {
-            background: var(--btn-green);
-            border-color: var(--neon-green);
-        }
-        .btn-win:hover { background: rgba(74, 222, 128, 0.4); }
+        .btn-full:hover { background: rgba(96, 165, 250, 0.4); }
 
-        .btn-loss {
-            background: var(--btn-red);
-            border-color: var(--neon-red);
+        /* Listas */
+        .history-list {
+            list-style: none;
         }
-        .btn-loss:hover { background: rgba(248, 113, 113, 0.4); }
 
-        /* Historial */
-        .history-header {
+        .history-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .item-active { border-left-color: var(--neon-blue); }
+        .item-win { border-left-color: var(--neon-green); }
+        .item-loss { border-left-color: var(--neon-red); }
+
+        .item-header {
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        .history-title {
-            font-size: 18px;
-            font-weight: 600;
+        .item-details h4 { font-size: 16px; margin-bottom: 4px; }
+        .item-details p { font-size: 12px; color: var(--text-muted); }
+        .item-amount { font-weight: bold; font-size: 16px; }
+
+        .item-targets {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.5);
+            font-size: 13px;
         }
+
+        .target-sl { color: var(--neon-red); }
+        .target-tp { color: var(--neon-green); }
+
+        .item-actions {
+            display: flex;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .item-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            background: transparent;
+            transition: background 0.2s;
+        }
+
+        .action-loss { color: var(--neon-red); border-right: 1px solid rgba(255,255,255,0.05); }
+        .action-loss:hover { background: var(--btn-red); }
+        .action-win { color: var(--neon-green); }
+        .action-win:hover { background: var(--btn-green); }
 
         .btn-undo {
             background: transparent;
             border: 1px solid var(--border-color);
-            padding: 8px 12px;
+            padding: 6px 10px;
             font-size: 12px;
             color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
         }
         
         .btn-undo:hover {
             color: var(--text-main);
             border-color: var(--text-main);
         }
-
-        .history-list {
-            list-style: none;
+        
+        .empty-msg {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 10px 0;
         }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 4px solid transparent;
-        }
-
-        .item-win { border-left-color: var(--neon-green); }
-        .item-loss { border-left-color: var(--neon-red); }
-
-        .item-details h4 { font-size: 16px; margin-bottom: 4px; }
-        .item-details p { font-size: 12px; color: var(--text-muted); }
-        .item-amount { font-weight: bold; font-size: 16px; }
 
     </style>
 </head>
@@ -222,14 +243,13 @@
 
 <div class="container">
     <div class="header">
-        <!-- Ícono Escudo Minimalista -->
         <svg viewBox="0 0 24 24">
             <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
         </svg>
         <h1>Inversiones Inteligentes</h1>
     </div>
 
-    <!-- Panel de Estadísticas Globales -->
+    <!-- Stats Globales -->
     <div class="glass-panel">
         <div class="stats-grid">
             <div class="stat-box">
@@ -251,8 +271,9 @@
         </div>
     </div>
 
-    <!-- Panel de Operación -->
+    <!-- Nueva Operación -->
     <div class="glass-panel">
+        <div class="panel-title">Abrir Nueva Operación</div>
         <div class="input-group">
             <label>Activo (Ej: QQQ, SPY, GLD)</label>
             <input type="text" id="activo-nombre" placeholder="Nombre del ETF..." autocomplete="off">
@@ -261,124 +282,110 @@
             <label>Precio de Entrada (Por acción/Cedear)</label>
             <input type="number" id="precio-entrada" placeholder="0.00" step="any" autocomplete="off">
         </div>
-
-        <div class="calc-results">
-            <div class="result-item">
-                <div class="stat-label">Stop Loss (-4%)</div>
-                <div class="stat-value text-red" id="calc-sl">$0.00</div>
-            </div>
-            <div class="result-item">
-                <div class="stat-label">Cantidad Aprox.</div>
-                <div class="stat-value" id="calc-qty">0</div>
-            </div>
-            <div class="result-item">
-                <div class="stat-label">Objetivo (+12%)</div>
-                <div class="stat-value text-green" id="calc-tp">$0.00</div>
-            </div>
-        </div>
-
-        <div class="btn-grid">
-            <button class="btn-loss" onclick="registrarOperacion('loss')">Registrar Pérdida<br>(-$40.000)</button>
-            <button class="btn-win" onclick="registrarOperacion('win')">Registrar Ganancia<br>(+$120.000)</button>
-        </div>
+        <button class="btn-full" onclick="abrirOperacion()">Abrir Operación</button>
     </div>
 
-    <!-- Historial (Últimas 10) -->
+    <!-- Operaciones Activas -->
     <div class="glass-panel">
-        <div class="history-header">
-            <div class="history-title">Últimas Operaciones (Top 10)</div>
+        <div class="panel-title">Operaciones Activas</div>
+        <ul class="history-list" id="activas-list">
+            <!-- Items Activos JS -->
+        </ul>
+    </div>
+
+    <!-- Historial -->
+    <div class="glass-panel">
+        <div class="panel-title">
+            Historial (Top 10)
             <button class="btn-undo" onclick="deshacerUltima()">⟲ Deshacer Última</button>
         </div>
         <ul class="history-list" id="history-list">
-            <!-- Items generados por JS -->
+            <!-- Items Historial JS -->
         </ul>
     </div>
 </div>
 
 <script>
-    // Variables y Constantes
-    const CAPITAL = 1000000;
     const GANANCIA_ARS = 120000;
     const PERDIDA_ARS = -40000;
 
-    // Cargar datos de LocalStorage
     let statsGlobales = JSON.parse(localStorage.getItem('ii_stats')) || { neto: 0, wins: 0, losses: 0 };
+    let activas = JSON.parse(localStorage.getItem('ii_activas')) || [];
     let historial = JSON.parse(localStorage.getItem('ii_history')) || [];
 
-    // Referencias DOM
-    const inputPrecio = document.getElementById('precio-entrada');
-    const inputActivo = document.getElementById('activo-nombre');
-    const UI = {
-        sl: document.getElementById('calc-sl'),
-        tp: document.getElementById('calc-tp'),
-        qty: document.getElementById('calc-qty'),
-        neto: document.getElementById('global-neto'),
-        wins: document.getElementById('global-wins'),
-        losses: document.getElementById('global-losses'),
-        list: document.getElementById('history-list')
-    };
-
-    // Formatear Moneda
     const formatMoney = (num) => new Intl.NumberFormat('es-AR').format(num);
+    const getFecha = () => new Date().toLocaleDateString('es-AR');
 
-    // Calcular en tiempo real
-    inputPrecio.addEventListener('input', () => {
+    function abrirOperacion() {
+        const inputActivo = document.getElementById('activo-nombre');
+        const inputPrecio = document.getElementById('precio-entrada');
+        
+        const activo = inputActivo.value.trim().toUpperCase();
         const p = parseFloat(inputPrecio.value);
-        if(p > 0) {
-            UI.sl.innerText = '$' + (p * 0.96).toFixed(2);
-            UI.tp.innerText = '$' + (p * 1.12).toFixed(2);
-            UI.qty.innerText = Math.floor(CAPITAL / p);
-        } else {
-            UI.sl.innerText = '$0.00';
-            UI.tp.innerText = '$0.00';
-            UI.qty.innerText = '0';
-        }
-    });
 
-    // Registrar Operación
-    function registrarOperacion(resultado) {
-        const activo = inputActivo.value.trim().toUpperCase() || 'ETF Desconocido';
-        const precio = inputPrecio.value ? parseFloat(inputPrecio.value).toFixed(2) : 'N/A';
-        const fecha = new Date().toLocaleDateString('es-AR');
+        if(!activo || isNaN(p) || p <= 0) {
+            alert('Por favor, ingresa un activo y un precio de entrada válido.');
+            return;
+        }
 
         const operacion = {
             id: Date.now(),
             activo: activo,
-            precio: precio,
-            resultado: resultado,
-            fecha: fecha,
-            monto: resultado === 'win' ? GANANCIA_ARS : PERDIDA_ARS
+            precio: p.toFixed(2),
+            sl: (p * 0.96).toFixed(2),
+            tp: (p * 1.12).toFixed(2),
+            fecha_apertura: getFecha()
         };
 
+        activas.push(operacion);
+        guardarDatos();
+        actualizarPantalla();
+
+        inputActivo.value = '';
+        inputPrecio.value = '';
+    }
+
+    function cerrarOperacion(id, resultado) {
+        const index = activas.findIndex(op => op.id === id);
+        if(index === -1) return;
+
+        const op = activas.splice(index, 1)[0]; // Sacar de activas
+        
+        // Completar datos de cierre
+        op.resultado = resultado;
+        op.fecha_cierre = getFecha();
+        op.monto = resultado === 'win' ? GANANCIA_ARS : PERDIDA_ARS;
+
         // Actualizar Globales
-        statsGlobales.neto += operacion.monto;
+        statsGlobales.neto += op.monto;
         if(resultado === 'win') statsGlobales.wins++;
         else statsGlobales.losses++;
 
-        // Actualizar Historial (Agregar al principio y cortar en 10)
-        historial.unshift(operacion);
+        // Pasar al historial
+        historial.unshift(op);
         if(historial.length > 10) historial.pop();
 
         guardarDatos();
         actualizarPantalla();
-        
-        // Limpiar inputs
-        inputActivo.value = '';
-        inputPrecio.value = '';
-        inputPrecio.dispatchEvent(new Event('input')); // resetear calculos
     }
 
-    // Deshacer Última Operación
     function deshacerUltima() {
-        if(historial.length === 0) return alert('No hay operaciones para deshacer.');
+        if(historial.length === 0) return alert('No hay operaciones recientes para deshacer.');
         
-        if(confirm('¿Seguro que deseas borrar el último registro? Se restarán los valores del global.')) {
-            const ultima = historial.shift(); // Saca el primero de la lista
+        if(confirm('¿Deshacer la última operación? Volverá al panel de "Activas".')) {
+            const ultima = historial.shift(); // Sacar del historial
             
             // Revertir stats
             statsGlobales.neto -= ultima.monto;
             if(ultima.resultado === 'win') statsGlobales.wins--;
             else statsGlobales.losses--;
+
+            // Limpiar datos de cierre y volver a activas
+            delete ultima.resultado;
+            delete ultima.fecha_cierre;
+            delete ultima.monto;
+            
+            activas.push(ultima);
 
             guardarDatos();
             actualizarPantalla();
@@ -387,39 +394,75 @@
 
     function guardarDatos() {
         localStorage.setItem('ii_stats', JSON.stringify(statsGlobales));
+        localStorage.setItem('ii_activas', JSON.stringify(activas));
         localStorage.setItem('ii_history', JSON.stringify(historial));
     }
 
     function actualizarPantalla() {
-        // Stats
-        UI.neto.innerText = (statsGlobales.neto > 0 ? '+' : '') + formatMoney(statsGlobales.neto) + ' ARS';
-        UI.neto.className = 'stat-value ' + (statsGlobales.neto >= 0 ? 'text-green' : 'text-red');
-        UI.wins.innerText = statsGlobales.wins;
-        UI.losses.innerText = statsGlobales.losses;
+        // Stats Generales
+        document.getElementById('global-neto').innerText = (statsGlobales.neto > 0 ? '+' : '') + formatMoney(statsGlobales.neto) + ' ARS';
+        document.getElementById('global-neto').className = 'stat-value ' + (statsGlobales.neto >= 0 ? 'text-green' : 'text-red');
+        document.getElementById('global-wins').innerText = statsGlobales.wins;
+        document.getElementById('global-losses').innerText = statsGlobales.losses;
 
-        // Historial
-        UI.list.innerHTML = '';
-        historial.forEach(op => {
-            const isWin = op.resultado === 'win';
-            const sign = isWin ? '+' : '';
-            const amountClass = isWin ? 'text-green' : 'text-red';
-            const itemClass = isWin ? 'item-win' : 'item-loss';
+        // Lista Activas
+        const listActivas = document.getElementById('activas-list');
+        if(activas.length === 0) {
+            listActivas.innerHTML = '<div class="empty-msg">No hay operaciones abiertas.</div>';
+        } else {
+            listActivas.innerHTML = '';
+            activas.forEach(op => {
+                listActivas.innerHTML += `
+                    <li class="history-item item-active">
+                        <div class="item-header">
+                            <div class="item-details">
+                                <h4>${op.activo}</h4>
+                                <p>Abierta: ${op.fecha_apertura} | Precio: $${op.precio}</p>
+                            </div>
+                        </div>
+                        <div class="item-targets">
+                            <div class="target-sl">Vender Pérdida: $${op.sl}</div>
+                            <div class="target-tp">Vender Ganancia: $${op.tp}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-loss" onclick="cerrarOperacion(${op.id}, 'loss')">Cerrar (-4%)</button>
+                            <button class="action-win" onclick="cerrarOperacion(${op.id}, 'win')">Cerrar (+12%)</button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
 
-            UI.list.innerHTML += `
-                <li class="history-item ${itemClass}">
-                    <div class="item-details">
-                        <h4>${op.activo}</h4>
-                        <p>${op.fecha} | Entrada: $${op.precio}</p>
-                    </div>
-                    <div class="item-amount ${amountClass}">
-                        ${sign}${formatMoney(op.monto)} ARS
-                    </div>
-                </li>
-            `;
-        });
+        // Lista Historial
+        const listHistorial = document.getElementById('history-list');
+        if(historial.length === 0) {
+            listHistorial.innerHTML = '<div class="empty-msg">El historial está vacío.</div>';
+        } else {
+            listHistorial.innerHTML = '';
+            historial.forEach(op => {
+                const isWin = op.resultado === 'win';
+                const sign = isWin ? '+' : '';
+                const amountClass = isWin ? 'text-green' : 'text-red';
+                const itemClass = isWin ? 'item-win' : 'item-loss';
+
+                listHistorial.innerHTML += `
+                    <li class="history-item ${itemClass}">
+                        <div class="item-header">
+                            <div class="item-details">
+                                <h4>${op.activo}</h4>
+                                <p>${op.fecha_apertura} ➔ ${op.fecha_cierre}</p>
+                                <p>Entrada: $${op.precio}</p>
+                            </div>
+                            <div class="item-amount ${amountClass}">
+                                ${sign}${formatMoney(op.monto)} ARS
+                            </div>
+                        </div>
+                    </li>
+                `;
+            });
+        }
     }
 
-    // Iniciar
     actualizarPantalla();
 </script>
 </body>
