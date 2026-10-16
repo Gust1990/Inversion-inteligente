@@ -1,593 +1,426 @@
-html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inversiones Inteligentes</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Inv. Inteligentes">
-    
-    <!-- Favicon (Escudo Minimalista) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'%3E%3Cpath fill-rule='evenodd' d='M12.516 2.17a.75.75 0 0 0-.032 0c-3.844.204-7.23 1.62-9.435 3.967A.75.75 0 0 0 3 6.671v4.829c0 4.195 2.164 8.04 5.568 10.36 1.942 1.326 4.093 1.996 6.432 1.996s4.49-.67 6.432-1.996C24.836 19.54 27 15.695 27 11.5V6.671a.75.75 0 0 0-.049-.534c-2.205-2.347-5.591-3.763-9.435-3.967Z' clip-rule='evenodd'/%3E%3C/svg%3E">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        black: '#000000',
-                        slate: { 800: '#1e293b', 900: '#0f172a' },
-                        emerald: { 400: '#34d399', 500: '#10b981', 900: '#064e3b' },
-                        rose: { 400: '#fb7185', 500: '#f43f5e', 900: '#881337' },
-                        brand: { 500: '#3b82f6' }
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- React & Babel -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        
-        let app, db, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        } catch (e) {
-            console.error("Firebase init error", e);
-        }
-
-        window.firebaseVars = { db, auth, doc, setDoc, onSnapshot, signInAnonymously, signInWithCustomToken, appId };
-    </script>
     <style>
-        /* Glassmorphism & Neon Utilities */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --neon-green: #4ade80;
+            --neon-red: #f87171;
+            --btn-green: rgba(74, 222, 128, 0.2);
+            --btn-red: rgba(248, 113, 113, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .header svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 10px;
+            fill: var(--text-main);
+        }
+
+        .glass-panel {
+            background: var(--card-bg);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
-        .neon-text-green {
-            text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+
+        /* Stats Globales */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: center;
         }
-        .neon-text-red {
-            text-shadow: 0 0 10px rgba(251, 113, 133, 0.5);
+        
+        .stat-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
         }
-        .neon-text-blue {
-            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
         }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
         }
-        input[type=number] { -moz-appearance: textfield; }
+
+        .text-green { color: var(--neon-green); text-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .text-red { color: var(--neon-red); text-shadow: 0 0 8px rgba(248,113,113,0.4); }
+
+        /* Calculadora */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--text-muted);
+        }
+
+        .calc-results {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .result-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-win {
+            background: var(--btn-green);
+            border-color: var(--neon-green);
+        }
+        .btn-win:hover { background: rgba(74, 222, 128, 0.4); }
+
+        .btn-loss {
+            background: var(--btn-red);
+            border-color: var(--neon-red);
+        }
+        .btn-loss:hover { background: rgba(248, 113, 113, 0.4); }
+
+        /* Historial */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .btn-undo {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .btn-undo:hover {
+            color: var(--text-main);
+            border-color: var(--text-main);
+        }
+
+        .history-list {
+            list-style: none;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid transparent;
+        }
+
+        .item-win { border-left-color: var(--neon-green); }
+        .item-loss { border-left-color: var(--neon-red); }
+
+        .item-details h4 { font-size: 16px; margin-bottom: 4px; }
+        .item-details p { font-size: 12px; color: var(--text-muted); }
+        .item-amount { font-weight: bold; font-size: 16px; }
+
     </style>
 </head>
-<body class="bg-black text-slate-300 font-sans antialiased min-h-screen selection:bg-brand-500/30">
-    <div id="root"></div>
+<body>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+<div class="container">
+    <div class="header">
+        <!-- Ícono Escudo Minimalista -->
+        <svg viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+        <h1>Inversiones Inteligentes</h1>
+    </div>
 
-        const ShieldIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-emerald-400 neon-text-green">
-                <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 0 0-.032 0c-3.844.204-7.23 1.62-9.435 3.967A.75.75 0 0 0 3 6.671v4.829c0 4.195 2.164 8.04 5.568 10.36 1.942 1.326 4.093 1.996 6.432 1.996s4.49-.67 6.432-1.996c3.404-2.32 5.568-6.165 5.568-10.36V6.671a.75.75 0 0 0-.049-.534c-2.205-2.347-5.591-3.763-9.435-3.967Z" clipRule="evenodd" />
-            </svg>
-        );
+    <!-- Panel de Estadísticas Globales -->
+    <div class="glass-panel">
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Capital Base</div>
+                <div class="stat-value">1.000.000 ARS</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Balance Global Neto</div>
+                <div class="stat-value" id="global-neto">0 ARS</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Operaciones Exitosas</div>
+                <div class="stat-value text-green" id="global-wins">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Operaciones Fallidas</div>
+                <div class="stat-value text-red" id="global-losses">0</div>
+            </div>
+        </div>
+    </div>
 
-        const TrashIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
-            </svg>
-        );
+    <!-- Panel de Operación -->
+    <div class="glass-panel">
+        <div class="input-group">
+            <label>Activo (Ej: QQQ, SPY, GLD)</label>
+            <input type="text" id="activo-nombre" placeholder="Nombre del ETF..." autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label>Precio de Entrada (Por acción/Cedear)</label>
+            <input type="number" id="precio-entrada" placeholder="0.00" step="any" autocomplete="off">
+        </div>
 
-        const UndoIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clipRule="evenodd" />
-            </svg>
-        );
+        <div class="calc-results">
+            <div class="result-item">
+                <div class="stat-label">Stop Loss (-4%)</div>
+                <div class="stat-value text-red" id="calc-sl">$0.00</div>
+            </div>
+            <div class="result-item">
+                <div class="stat-label">Cantidad Aprox.</div>
+                <div class="stat-value" id="calc-qty">0</div>
+            </div>
+            <div class="result-item">
+                <div class="stat-label">Objetivo (+12%)</div>
+                <div class="stat-value text-green" id="calc-tp">$0.00</div>
+            </div>
+        </div>
 
-        const CapitalAmount = 1000000;
-        const WinPerc = 0.12;
-        const LossPerc = 0.04;
-        const WinMoney = CapitalAmount * WinPerc;
-        const LossMoney = CapitalAmount * LossPerc;
+        <div class="btn-grid">
+            <button class="btn-loss" onclick="registrarOperacion('loss')">Registrar Pérdida<br>(-$40.000)</button>
+            <button class="btn-win" onclick="registrarOperacion('win')">Registrar Ganancia<br>(+$120.000)</button>
+        </div>
+    </div>
 
-        const defaultState = {
-            activeOps: [],
-            closedOps: [], // Top 10
-            globalStats: { totalNet: 0, wins: 0, losses: 0, totalOps: 0 }
+    <!-- Historial (Últimas 10) -->
+    <div class="glass-panel">
+        <div class="history-header">
+            <div class="history-title">Últimas Operaciones (Top 10)</div>
+            <button class="btn-undo" onclick="deshacerUltima()">⟲ Deshacer Última</button>
+        </div>
+        <ul class="history-list" id="history-list">
+            <!-- Items generados por JS -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Variables y Constantes
+    const CAPITAL = 1000000;
+    const GANANCIA_ARS = 120000;
+    const PERDIDA_ARS = -40000;
+
+    // Cargar datos de LocalStorage
+    let statsGlobales = JSON.parse(localStorage.getItem('ii_stats')) || { neto: 0, wins: 0, losses: 0 };
+    let historial = JSON.parse(localStorage.getItem('ii_history')) || [];
+
+    // Referencias DOM
+    const inputPrecio = document.getElementById('precio-entrada');
+    const inputActivo = document.getElementById('activo-nombre');
+    const UI = {
+        sl: document.getElementById('calc-sl'),
+        tp: document.getElementById('calc-tp'),
+        qty: document.getElementById('calc-qty'),
+        neto: document.getElementById('global-neto'),
+        wins: document.getElementById('global-wins'),
+        losses: document.getElementById('global-losses'),
+        list: document.getElementById('history-list')
+    };
+
+    // Formatear Moneda
+    const formatMoney = (num) => new Intl.NumberFormat('es-AR').format(num);
+
+    // Calcular en tiempo real
+    inputPrecio.addEventListener('input', () => {
+        const p = parseFloat(inputPrecio.value);
+        if(p > 0) {
+            UI.sl.innerText = '$' + (p * 0.96).toFixed(2);
+            UI.tp.innerText = '$' + (p * 1.12).toFixed(2);
+            UI.qty.innerText = Math.floor(CAPITAL / p);
+        } else {
+            UI.sl.innerText = '$0.00';
+            UI.tp.innerText = '$0.00';
+            UI.qty.innerText = '0';
+        }
+    });
+
+    // Registrar Operación
+    function registrarOperacion(resultado) {
+        const activo = inputActivo.value.trim().toUpperCase() || 'ETF Desconocido';
+        const precio = inputPrecio.value ? parseFloat(inputPrecio.value).toFixed(2) : 'N/A';
+        const fecha = new Date().toLocaleDateString('es-AR');
+
+        const operacion = {
+            id: Date.now(),
+            activo: activo,
+            precio: precio,
+            resultado: resultado,
+            fecha: fecha,
+            monto: resultado === 'win' ? GANANCIA_ARS : PERDIDA_ARS
         };
 
-        function App() {
-            const [user, setUser] = useState(null);
-            const [appData, setAppData] = useState(defaultState);
-            const [loading, setLoading] = useState(true);
-            const [tab, setTab] = useState('active'); 
-            const [toast, setToast] = useState(null);
+        // Actualizar Globales
+        statsGlobales.neto += operacion.monto;
+        if(resultado === 'win') statsGlobales.wins++;
+        else statsGlobales.losses++;
 
-            const [asset, setAsset] = useState('');
-            const [entryPrice, setEntryPrice] = useState('');
+        // Actualizar Historial (Agregar al principio y cortar en 10)
+        historial.unshift(operacion);
+        if(historial.length > 10) historial.pop();
 
-            useEffect(() => {
-                const initAuth = async () => {
-                    const { auth, signInWithCustomToken, signInAnonymously } = window.firebaseVars;
-                    if (!auth) return;
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        setUser(auth.currentUser);
-                    } catch (err) {
-                        console.error("Auth error", err);
-                    }
-                };
-                initAuth();
-            }, []);
+        guardarDatos();
+        actualizarPantalla();
+        
+        // Limpiar inputs
+        inputActivo.value = '';
+        inputPrecio.value = '';
+        inputPrecio.dispatchEvent(new Event('input')); // resetear calculos
+    }
 
-            useEffect(() => {
-                if (!user) return;
-                const { db, doc, onSnapshot, appId } = window.firebaseVars;
-                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'trading_premium_state');
-                
-                const unsubscribe = onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setAppData(docSnap.data());
-                    } else {
-                        setAppData(defaultState);
-                    }
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Firestore error", error);
-                    setLoading(false);
-                });
-
-                return () => unsubscribe();
-            }, [user]);
-
-            const showToast = (msg) => {
-                setToast(msg);
-                setTimeout(() => setToast(null), 3500);
-            };
-
-            const formatARS = (val) => new Intl.NumberFormat('es-AR').format(val) + ' ARS';
-            const formatUSD = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(val);
+    // Deshacer Última Operación
+    function deshacerUltima() {
+        if(historial.length === 0) return alert('No hay operaciones para deshacer.');
+        
+        if(confirm('¿Seguro que deseas borrar el último registro? Se restarán los valores del global.')) {
+            const ultima = historial.shift(); // Saca el primero de la lista
             
-            // Format Date ONLY (No time)
-            const formatDate = (ts) => {
-                if (!ts) return '-';
-                return new Date(ts).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            };
+            // Revertir stats
+            statsGlobales.neto -= ultima.monto;
+            if(ultima.resultado === 'win') statsGlobales.wins--;
+            else statsGlobales.losses--;
 
-            const saveState = async (newState) => {
-                const { db, doc, setDoc, appId } = window.firebaseVars;
-                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'trading_premium_state');
-                await setDoc(docRef, newState, { merge: false });
-            };
+            guardarDatos();
+            actualizarPantalla();
+        }
+    }
 
-            const handleOpenOp = async (e) => {
-                e.preventDefault();
-                if (!user) return;
-                
-                const price = parseFloat(entryPrice);
-                if (!asset || isNaN(price) || price <= 0) {
-                    showToast("Por favor, ingresa un activo y un precio válido.");
-                    return;
-                }
+    function guardarDatos() {
+        localStorage.setItem('ii_stats', JSON.stringify(statsGlobales));
+        localStorage.setItem('ii_history', JSON.stringify(historial));
+    }
 
-                const newOp = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                    asset: asset.toUpperCase(),
-                    entryPrice: price,
-                    stopLoss: price * (1 - LossPerc),
-                    takeProfit: price * (1 + WinPerc),
-                    openedAt: Date.now()
-                };
+    function actualizarPantalla() {
+        // Stats
+        UI.neto.innerText = (statsGlobales.neto > 0 ? '+' : '') + formatMoney(statsGlobales.neto) + ' ARS';
+        UI.neto.className = 'stat-value ' + (statsGlobales.neto >= 0 ? 'text-green' : 'text-red');
+        UI.wins.innerText = statsGlobales.wins;
+        UI.losses.innerText = statsGlobales.losses;
 
-                const newState = {
-                    ...appData,
-                    activeOps: [newOp, ...appData.activeOps]
-                };
+        // Historial
+        UI.list.innerHTML = '';
+        historial.forEach(op => {
+            const isWin = op.resultado === 'win';
+            const sign = isWin ? '+' : '';
+            const amountClass = isWin ? 'text-green' : 'text-red';
+            const itemClass = isWin ? 'item-win' : 'item-loss';
 
-                try {
-                    await saveState(newState);
-                    setAsset('');
-                    setEntryPrice('');
-                    setTab('active');
-                    showToast("Operación registrada correctamente.");
-                } catch (err) {
-                    console.error(err);
-                    showToast("Error al abrir operación.");
-                }
-            };
-
-            const handleDeleteActiveOp = async (opId) => {
-                if (!user) return;
-                const newState = {
-                    ...appData,
-                    activeOps: appData.activeOps.filter(o => o.id !== opId)
-                };
-                try {
-                    await saveState(newState);
-                    showToast("Operación activa eliminada.");
-                } catch (err) {
-                    console.error(err);
-                }
-            };
-
-            const handleCloseOp = async (op, resultType) => {
-                if (!user) return;
-                
-                const moneyImpact = resultType === 'win' ? WinMoney : -LossMoney;
-                
-                const closedOp = {
-                    ...op,
-                    closedAt: Date.now(),
-                    result: resultType,
-                    moneyImpact
-                };
-
-                const newActiveOps = appData.activeOps.filter(o => o.id !== op.id);
-                const newClosedOps = [closedOp, ...appData.closedOps].slice(0, 10);
-
-                const newStats = { ...appData.globalStats };
-                newStats.totalOps += 1;
-                newStats.totalNet += moneyImpact;
-                if (resultType === 'win') newStats.wins += 1;
-                else newStats.losses += 1;
-
-                const newState = { activeOps: newActiveOps, closedOps: newClosedOps, globalStats: newStats };
-
-                try {
-                    await saveState(newState);
-                    showToast(`Operación cerrada exitosamente (${resultType === 'win' ? '+12%' : '-4%'}).`);
-                } catch (err) {
-                    console.error(err);
-                    showToast("Error al cerrar operación.");
-                }
-            };
-
-            const handleUndoLastClose = async () => {
-                if (!user || appData.closedOps.length === 0) {
-                    showToast("No hay historial reciente para deshacer.");
-                    return;
-                }
-
-                const lastClosed = appData.closedOps[0];
-                
-                const newStats = { ...appData.globalStats };
-                newStats.totalOps = Math.max(0, newStats.totalOps - 1);
-                newStats.totalNet -= lastClosed.moneyImpact;
-                if (lastClosed.result === 'win') newStats.wins = Math.max(0, newStats.wins - 1);
-                else newStats.losses = Math.max(0, newStats.losses - 1);
-
-                const newClosedOps = appData.closedOps.slice(1);
-
-                const restoredOp = {
-                    id: lastClosed.id,
-                    asset: lastClosed.asset,
-                    entryPrice: lastClosed.entryPrice,
-                    stopLoss: lastClosed.stopLoss,
-                    takeProfit: lastClosed.takeProfit,
-                    openedAt: lastClosed.openedAt
-                };
-                
-                const newActiveOps = [restoredOp, ...appData.activeOps];
-                const newState = { activeOps: newActiveOps, closedOps: newClosedOps, globalStats: newStats };
-
-                try {
-                    await saveState(newState);
-                    setTab('active');
-                    showToast("Último cierre deshecho. Estadísticas restauradas.");
-                } catch (err) {
-                    console.error(err);
-                    showToast("Error al deshacer operación.");
-                }
-            };
-
-            if (loading) return <div className="flex h-screen items-center justify-center text-slate-500 font-light tracking-widest">INICIANDO SISTEMA PREMIUM...</div>;
-
-            return (
-                <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8 relative">
-                    
-                    {/* Background glow effects */}
-                    <div className="fixed top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-                    <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none"></div>
-
-                    {/* Header */}
-                    <header className="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-white/10 mb-8 gap-6 relative z-10">
-                        <div className="flex items-center gap-4">
-                            <ShieldIcon />
-                            <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-md">Inversiones Inteligentes</h1>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm font-medium">
-                            <div className="glass-card px-5 py-2.5 rounded-xl text-white">
-                                <span className="text-slate-400 font-light mr-2">Capital:</span>
-                                <span className="font-mono tracking-wide">{formatARS(CapitalAmount)}</span>
-                            </div>
-                            <div className="glass-card px-5 py-2.5 rounded-xl border-l-2 border-l-rose-500">
-                                <span className="text-rose-400/80 font-light mr-2">Stop Loss:</span>
-                                <span className="text-rose-400 font-mono neon-text-red">-4%</span>
-                            </div>
-                            <div className="glass-card px-5 py-2.5 rounded-xl border-l-2 border-l-emerald-500">
-                                <span className="text-emerald-400/80 font-light mr-2">Objetivo:</span>
-                                <span className="text-emerald-400 font-mono neon-text-green">+12%</span>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-                        
-                        {/* PANEL IZQUIERDO: FORMULARIO */}
-                        <div className="lg:col-span-4 space-y-6">
-                            <div className="glass-card rounded-2xl p-6">
-                                <h2 className="text-sm font-semibold mb-6 flex items-center gap-2 text-white/90 uppercase tracking-widest">
-                                    Apertura de Posición
-                                </h2>
-                                
-                                <form onSubmit={handleOpenOp} className="space-y-5">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Nombre del Activo</label>
-                                        <input 
-                                            type="text" 
-                                            value={asset}
-                                            onChange={e => setAsset(e.target.value.toUpperCase())}
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-500/50 focus:bg-white/5 transition-all uppercase font-mono tracking-wider"
-                                            placeholder="EJ: SPY, QQQ"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Precio de Entrada (USD)</label>
-                                        <input 
-                                            type="number" 
-                                            step="0.01"
-                                            value={entryPrice}
-                                            onChange={e => setEntryPrice(e.target.value)}
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-500/50 focus:bg-white/5 transition-all font-mono tracking-wider"
-                                            placeholder="0.00"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Pre-cálculo Automático Limpio (Sin Acciones) */}
-                                    {entryPrice && !isNaN(entryPrice) && entryPrice > 0 && (
-                                        <div className="bg-black/40 rounded-xl p-4 text-sm border border-white/5 space-y-3 mt-4">
-                                            <div className="flex justify-between items-center text-emerald-400">
-                                                <span className="font-light">Take Profit (+12%)</span>
-                                                <span className="font-mono font-medium neon-text-green">{formatUSD(parseFloat(entryPrice) * 1.12)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-rose-400">
-                                                <span className="font-light">Stop Loss (-4%)</span>
-                                                <span className="font-mono font-medium neon-text-red">{formatUSD(parseFloat(entryPrice) * 0.96)}</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button 
-                                        type="submit"
-                                        className="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white font-medium py-3.5 px-4 rounded-xl transition-all mt-4 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] uppercase tracking-wider text-xs"
-                                    >
-                                        Registrar Operación
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        {/* PANEL DERECHO: TABS Y GESTIÓN */}
-                        <div className="lg:col-span-8 flex flex-col min-h-[500px]">
-                            
-                            {/* Tabs Premium */}
-                            <div className="flex mb-6 gap-2 border-b border-white/10 pb-1">
-                                <button 
-                                    onClick={() => setTab('active')}
-                                    className={`px-6 py-2.5 font-medium text-sm rounded-t-xl transition-all ${tab === 'active' ? 'text-emerald-400 border-b-2 border-emerald-400 neon-text-green bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                                >
-                                    Operaciones Activas
-                                    {appData.activeOps.length > 0 && <span className="ml-2 bg-white/10 text-white py-0.5 px-2 rounded border border-white/10 text-xs">{appData.activeOps.length}</span>}
-                                </button>
-                                <button 
-                                    onClick={() => setTab('history')}
-                                    className={`px-6 py-2.5 font-medium text-sm rounded-t-xl transition-all ${tab === 'history' ? 'text-emerald-400 border-b-2 border-emerald-400 neon-text-green bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                                >
-                                    Estadísticas e Historial
-                                </button>
-                            </div>
-
-                            {/* CONTENIDO TABS */}
-                            <div className="flex-1">
-                                
-                                {/* TAB: ACTIVAS */}
-                                {tab === 'active' && (
-                                    <div className="space-y-4">
-                                        {appData.activeOps.length === 0 ? (
-                                            <div className="text-center py-20 text-slate-500 font-light tracking-widest uppercase border border-dashed border-white/10 rounded-2xl">
-                                                Sin operaciones activas
-                                            </div>
-                                        ) : appData.activeOps.map(op => (
-                                            <div key={op.id} className="glass-card rounded-2xl p-6 relative group overflow-hidden">
-                                                <div className="absolute top-0 left-0 w-1 h-full bg-brand-500/50"></div>
-                                                
-                                                <button onClick={() => handleDeleteActiveOp(op.id)} className="absolute top-5 right-5 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all" title="Eliminar registro">
-                                                    <TrashIcon />
-                                                </button>
-
-                                                <div className="flex justify-between items-start mb-6 pl-2">
-                                                    <div>
-                                                        <h3 className="text-2xl font-bold text-white font-mono tracking-tight flex items-center gap-3">
-                                                            {op.asset}
-                                                            <span className="text-[9px] font-normal bg-white/10 text-slate-300 px-2 py-0.5 rounded uppercase tracking-widest border border-white/10">Activa</span>
-                                                        </h3>
-                                                        <p className="text-xs text-slate-400 mt-1 font-light tracking-wider">Apertura: {formatDate(op.openedAt)}</p>
-                                                    </div>
-                                                    <div className="text-right pr-6">
-                                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Precio Entrada</p>
-                                                        <p className="font-mono text-xl font-medium text-white">{formatUSD(op.entryPrice)}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-4 mb-6 pl-2">
-                                                    <div className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 text-center">
-                                                        <p className="text-[10px] text-rose-400/70 mb-1.5 uppercase tracking-widest">Stop Loss (-4%)</p>
-                                                        <p className="font-mono text-rose-400 font-semibold text-lg neon-text-red">{formatUSD(op.stopLoss)}</p>
-                                                    </div>
-                                                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 text-center">
-                                                        <p className="text-[10px] text-emerald-400/70 mb-1.5 uppercase tracking-widest">Take Profit (+12%)</p>
-                                                        <p className="font-mono text-emerald-400 font-semibold text-lg neon-text-green">{formatUSD(op.takeProfit)}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex gap-4 pl-2">
-                                                    <button onClick={() => handleCloseOp(op, 'loss')} className="flex-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 py-3.5 rounded-xl text-xs uppercase tracking-widest font-medium transition-all hover:shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-                                                        Cerrar en Pérdida
-                                                    </button>
-                                                    <button onClick={() => handleCloseOp(op, 'win')} className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 py-3.5 rounded-xl text-xs uppercase tracking-widest font-medium transition-all hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                                                        Cerrar en Ganancia
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* TAB: HISTORIAL */}
-                                {tab === 'history' && (
-                                    <div className="space-y-8">
-                                        
-                                        {/* Global Stats Premium */}
-                                        <div>
-                                            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3 pl-1">Rendimiento Global</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="glass-card rounded-2xl p-5 text-center flex flex-col justify-center">
-                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Aciertos / Fallos</p>
-                                                    <p className="text-2xl font-mono text-white">
-                                                        <span className="text-emerald-400 neon-text-green">{appData.globalStats.wins}</span> 
-                                                        <span className="text-white/20 mx-3">/</span> 
-                                                        <span className="text-rose-400 neon-text-red">{appData.globalStats.losses}</span>
-                                                    </p>
-                                                </div>
-                                                <div className="glass-card rounded-2xl p-5 text-center flex flex-col justify-center">
-                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Operaciones Totales</p>
-                                                    <p className="text-2xl font-mono text-white">{appData.globalStats.totalOps}</p>
-                                                </div>
-                                                <div className={`glass-card rounded-2xl p-5 text-center flex flex-col justify-center border-b-2 ${appData.globalStats.totalNet >= 0 ? 'border-b-emerald-500' : 'border-b-rose-500'}`}>
-                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Balance Neto ARS</p>
-                                                    <p className={`text-2xl font-mono tracking-tight ${appData.globalStats.totalNet >= 0 ? 'text-emerald-400 neon-text-green' : 'text-rose-400 neon-text-red'}`}>
-                                                        {appData.globalStats.totalNet > 0 ? '+' : ''}{formatARS(appData.globalStats.totalNet)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Historial Top 10 */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-4 pl-1">
-                                                <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Últimas 10 Operaciones</h3>
-                                                
-                                                <button 
-                                                    onClick={handleUndoLastClose}
-                                                    className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-medium text-rose-400 hover:text-white bg-white/5 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-white/10 transition-all"
-                                                >
-                                                    <UndoIcon />
-                                                    Deshacer Última
-                                                </button>
-                                            </div>
-
-                                            {appData.closedOps.length === 0 ? (
-                                                <div className="text-center py-16 text-slate-500 font-light tracking-widest uppercase border border-dashed border-white/10 rounded-2xl text-xs">
-                                                    Historial vacío
-                                                </div>
-                                            ) : (
-                                                <div className="glass-card rounded-2xl overflow-hidden">
-                                                    <div className="overflow-x-auto">
-                                                        <table className="w-full text-sm text-left whitespace-nowrap">
-                                                            <thead className="text-[9px] text-slate-400 uppercase tracking-widest bg-black/40 border-b border-white/10">
-                                                                <tr>
-                                                                    <th className="px-6 py-4 font-medium">Activo</th>
-                                                                    <th className="px-6 py-4 font-medium">Apertura</th>
-                                                                    <th className="px-6 py-4 font-medium">Cierre</th>
-                                                                    <th className="px-6 py-4 font-medium text-right">Resultado</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="divide-y divide-white/5">
-                                                                {appData.closedOps.map(op => (
-                                                                    <tr key={op.id} className="hover:bg-white/5 transition-all">
-                                                                        <td className="px-6 py-4 font-mono font-bold text-white tracking-wider">{op.asset}</td>
-                                                                        <td className="px-6 py-4 text-slate-400 text-xs font-light">{formatDate(op.openedAt)}</td>
-                                                                        <td className="px-6 py-4 text-slate-400 text-xs font-light">{formatDate(op.closedAt)}</td>
-                                                                        <td className="px-6 py-4 text-right">
-                                                                            {op.result === 'win' ? (
-                                                                                <div className="inline-flex flex-col items-end">
-                                                                                    <span className="text-emerald-400 text-[10px] uppercase tracking-widest font-medium bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20 neon-text-green">+12% Win</span>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="inline-flex flex-col items-end">
-                                                                                    <span className="text-rose-400 text-[10px] uppercase tracking-widest font-medium bg-rose-500/10 px-2.5 py-1 rounded border border-rose-500/20 neon-text-red">-4% Loss</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+            UI.list.innerHTML += `
+                <li class="history-item ${itemClass}">
+                    <div class="item-details">
+                        <h4>${op.activo}</h4>
+                        <p>${op.fecha} | Entrada: $${op.precio}</p>
                     </div>
+                    <div class="item-amount ${amountClass}">
+                        ${sign}${formatMoney(op.monto)} ARS
+                    </div>
+                </li>
+            `;
+        });
+    }
 
-                    {/* Notificaciones Glass */}
-                    {toast && (
-                        <div className="fixed bottom-8 right-8 glass-card text-white px-6 py-4 rounded-xl flex items-center gap-3 animate-fade-in-up z-50">
-                            <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
-                            <p className="text-sm font-light tracking-wide">{toast}</p>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-
-    <style>
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-    </style>
+    // Iniciar
+    actualizarPantalla();
+</script>
 </body>
 </html>
-```
