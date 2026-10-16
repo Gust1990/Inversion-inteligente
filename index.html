@@ -1,0 +1,506 @@
+html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inversión Inteligente</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Inv. Inteligente">
+    
+    <!-- Favicon (Escudo Minimalista) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M12.516 2.17a.75.75 0 0 0-.032 0c-3.844.204-7.23 1.62-9.435 3.967A.75.75 0 0 0 3 6.671v4.829c0 4.195 2.164 8.04 5.568 10.36 1.942 1.326 4.093 1.996 6.432 1.996s4.49-.67 6.432-1.996C24.836 19.54 27 15.695 27 11.5V6.671a.75.75 0 0 0-.049-.534c-2.205-2.347-5.591-3.763-9.435-3.967Z' clip-rule='evenodd'/%3E%3C/svg%3E">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        black: '#000000',
+                        slate: { 850: '#151e2e', 900: '#0f172a' },
+                        emerald: { 500: '#10b981', 900: '#064e3b' },
+                        rose: { 500: '#f43f5e', 900: '#881337' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.error("Firebase init error", e);
+        }
+
+        window.firebaseVars = { db, auth, doc, setDoc, onSnapshot, signInAnonymously, signInWithCustomToken, appId };
+    </script>
+</head>
+<body class="bg-black text-slate-300 font-sans antialiased min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Íconos Minimalistas
+        const ShieldIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-slate-400">
+                <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 0 0-.032 0c-3.844.204-7.23 1.62-9.435 3.967A.75.75 0 0 0 3 6.671v4.829c0 4.195 2.164 8.04 5.568 10.36 1.942 1.326 4.093 1.996 6.432 1.996s4.49-.67 6.432-1.996c3.404-2.32 5.568-6.165 5.568-10.36V6.671a.75.75 0 0 0-.049-.534c-2.205-2.347-5.591-3.763-9.435-3.967Z" clipRule="evenodd" />
+            </svg>
+        );
+
+        const defaultState = {
+            globalStats: { totalNet: 0, wins: 0, losses: 0, totalOps: 0 },
+            recentOperations: []
+        };
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [appData, setAppData] = useState(defaultState);
+            const [loading, setLoading] = useState(true);
+            const [toast, setToast] = useState(null);
+
+            // Formulario
+            const [asset, setAsset] = useState('');
+            const [entryPrice, setEntryPrice] = useState('');
+            const [investmentAmount, setInvestmentAmount] = useState(1000000); // 1.000.000 ARS default
+
+            useEffect(() => {
+                const initAuth = async () => {
+                    const { auth, signInWithCustomToken, signInAnonymously } = window.firebaseVars;
+                    if (!auth) return;
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        setUser(auth.currentUser);
+                    } catch (err) {
+                        console.error("Auth error", err);
+                    }
+                };
+                initAuth();
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const { db, doc, onSnapshot, appId } = window.firebaseVars;
+                
+                // Un solo documento para mantener las transacciones atómicas
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
+                
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setAppData(docSnap.data());
+                    } else {
+                        setAppData(defaultState);
+                    }
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Firestore error", error);
+                    setLoading(false);
+                });
+
+                return () => unsubscribe();
+            }, [user]);
+
+            const showToast = (msg) => {
+                setToast(msg);
+                setTimeout(() => setToast(null), 3500);
+            };
+
+            const formatARS = (val) => new Intl.NumberFormat('es-AR').format(val) + ' ARS';
+            const formatUSD = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(val);
+            const formatDate = (ts) => new Date(ts).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+            // Registrar Operación
+            const handleRegisterOp = async (type) => {
+                if (!user) return;
+                const price = parseFloat(entryPrice);
+                const inv = parseFloat(investmentAmount);
+                if (!asset || isNaN(price) || price <= 0 || isNaN(inv) || inv <= 0) {
+                    showToast("Completa los datos de Activo, Precio e Inversión correctamente.");
+                    return;
+                }
+
+                const winMoney = inv * 0.12;
+                const lossMoney = inv * 0.04;
+                const impact = type === 'win' ? winMoney : -lossMoney;
+
+                const newOp = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    asset: asset.toUpperCase(),
+                    entryPrice: price,
+                    investment: inv,
+                    result: type,
+                    moneyImpact: impact,
+                    date: Date.now()
+                };
+
+                const newStats = { ...appData.globalStats };
+                newStats.totalOps += 1;
+                newStats.totalNet += impact;
+                if (type === 'win') newStats.wins += 1;
+                else newStats.losses += 1;
+
+                // Lógica LIFO y mantener solo 10
+                const updatedOps = [newOp, ...appData.recentOperations].slice(0, 10);
+
+                const newState = { globalStats: newStats, recentOperations: updatedOps };
+
+                try {
+                    const { db, doc, setDoc, appId } = window.firebaseVars;
+                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
+                    await setDoc(docRef, newState, { merge: true });
+                    
+                    setAsset('');
+                    setEntryPrice('');
+                    showToast(`Operación registrada: ${type === 'win' ? '+12%' : '-4%'}`);
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error al guardar la operación.");
+                }
+            };
+
+            // Borrar Último Dato
+            const handleUndo = async () => {
+                if (!user || appData.recentOperations.length === 0) {
+                    showToast("No hay datos recientes para borrar.");
+                    return;
+                }
+
+                const lastOp = appData.recentOperations[0];
+                const newStats = { ...appData.globalStats };
+                
+                // Revertir el impacto global
+                newStats.totalOps = Math.max(0, newStats.totalOps - 1);
+                newStats.totalNet -= lastOp.moneyImpact;
+                if (lastOp.result === 'win') {
+                    newStats.wins = Math.max(0, newStats.wins - 1);
+                } else {
+                    newStats.losses = Math.max(0, newStats.losses - 1);
+                }
+
+                // Remover la última operación
+                const updatedOps = appData.recentOperations.slice(1);
+
+                const newState = { globalStats: newStats, recentOperations: updatedOps };
+
+                try {
+                    const { db, doc, setDoc, appId } = window.firebaseVars;
+                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
+                    await setDoc(docRef, newState, { merge: true });
+                    showToast("Última operación borrada. Estadísticas globales corregidas.");
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error al intentar deshacer la operación.");
+                }
+            };
+
+            // Copia de Seguridad JSON
+            const exportJSON = () => {
+                const dataStr = JSON.stringify(appData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `backup_inversiones_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Datos exportados correctamente.");
+            };
+
+            const importJSON = async (e) => {
+                if (!user) return;
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        if (!importedData.globalStats || !Array.isArray(importedData.recentOperations)) {
+                            throw new Error("Formato inválido");
+                        }
+
+                        const { db, doc, setDoc, appId } = window.firebaseVars;
+                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
+                        await setDoc(docRef, importedData, { merge: false }); // Sobrescribe todo
+
+                        showToast("Copia de seguridad restaurada con éxito.");
+                        e.target.value = ''; 
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Error al importar: el archivo JSON no es válido.");
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            if (loading) return <div className="flex h-screen items-center justify-center text-slate-500">Conectando al sistema...</div>;
+
+            const winRate = appData.globalStats.totalOps > 0 
+                ? ((appData.globalStats.wins / appData.globalStats.totalOps) * 100).toFixed(1) 
+                : 0;
+
+            return (
+                <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
+                    {/* Header Minimalista */}
+                    <header className="flex flex-col sm:flex-row items-center justify-between pb-6 mb-8 border-b border-slate-800 gap-4">
+                        <div className="flex items-center gap-3">
+                            <ShieldIcon />
+                            <h1 className="text-xl font-medium tracking-wide text-slate-200">Sistema Cuantitativo</h1>
+                        </div>
+                        <div className="flex gap-4">
+                            <label className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer transition-colors flex items-center gap-1">
+                                Importar
+                                <input type="file" accept=".json" onChange={importJSON} className="hidden" />
+                            </label>
+                            <button onClick={exportJSON} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                                Exportar
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        
+                        {/* Panel Izquierdo: Formulario Operativo */}
+                        <div className="lg:col-span-5 space-y-6">
+                            
+                            <div className="bg-[#080808] border border-slate-800 p-6 rounded-2xl">
+                                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-6">Nueva Operación</h2>
+                                
+                                <div className="space-y-5">
+                                    {/* Inputs */}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-1.5">Monto de Inversión (ARS)</label>
+                                            <input 
+                                                type="number" 
+                                                value={investmentAmount}
+                                                onChange={e => setInvestmentAmount(e.target.value)}
+                                                className="w-full bg-black border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:outline-none focus:border-slate-500 transition-colors font-mono"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Activo (Ej. SPY)</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={asset}
+                                                    onChange={e => setAsset(e.target.value.toUpperCase())}
+                                                    className="w-full bg-black border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:outline-none focus:border-slate-500 transition-colors uppercase font-mono"
+                                                    placeholder="TICKER"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Precio Entrada (USD)</label>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01"
+                                                    value={entryPrice}
+                                                    onChange={e => setEntryPrice(e.target.value)}
+                                                    className="w-full bg-black border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:outline-none focus:border-slate-500 transition-colors font-mono"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Cálculos */}
+                                    {entryPrice > 0 && investmentAmount > 0 && (
+                                        <div className="p-4 bg-slate-900/30 rounded-xl border border-slate-800/50 space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-slate-400">Acciones Estimadas</span>
+                                                <span className="font-mono text-sm text-slate-300">{Math.floor(investmentAmount / entryPrice)} act.</span>
+                                            </div>
+                                            <div className="h-px bg-slate-800 w-full"></div>
+                                            <div className="flex justify-between items-center text-emerald-400/80">
+                                                <span className="text-sm">Precio Take Profit (+12%)</span>
+                                                <span className="font-mono font-medium">{formatUSD(parseFloat(entryPrice) * 1.12)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-rose-400/80">
+                                                <span className="text-sm">Precio Stop Loss (-4%)</span>
+                                                <span className="font-mono font-medium">{formatUSD(parseFloat(entryPrice) * 0.96)}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Botones de Registro Rápido */}
+                                    <div className="pt-2 grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => handleRegisterOp('loss')}
+                                            className="w-full bg-black border border-rose-900/50 hover:bg-rose-950/30 text-rose-400 text-sm font-medium py-3.5 rounded-xl transition-colors text-center"
+                                        >
+                                            Pérdida (-4%)
+                                        </button>
+                                        <button 
+                                            onClick={() => handleRegisterOp('win')}
+                                            className="w-full bg-black border border-emerald-900/50 hover:bg-emerald-950/30 text-emerald-400 text-sm font-medium py-3.5 rounded-xl transition-colors text-center"
+                                        >
+                                            Ganancia (+12%)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Panel Derecho: Dashboard y Log */}
+                        <div className="lg:col-span-7 space-y-8">
+                            
+                            {/* Stats Globales Perpetuas */}
+                            <div>
+                                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Acumulado Perpetuo Global</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-[#080808] border border-slate-800 p-4 rounded-2xl">
+                                        <p className="text-xs text-slate-500 mb-2">Total Operaciones</p>
+                                        <p className="text-xl font-mono text-slate-300">{appData.globalStats.totalOps}</p>
+                                        <div className="mt-2 text-xs text-slate-600">Histórico de por vida</div>
+                                    </div>
+                                    <div className="bg-[#080808] border border-slate-800 p-4 rounded-2xl">
+                                        <p className="text-xs text-slate-500 mb-2">Win Rate</p>
+                                        <p className="text-xl font-mono text-slate-300">{winRate}%</p>
+                                        <div className="mt-2 flex gap-2 text-xs">
+                                            <span className="text-emerald-500/70">{appData.globalStats.wins} G</span>
+                                            <span className="text-slate-600">|</span>
+                                            <span className="text-rose-500/70">{appData.globalStats.losses} P</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#080808] border border-slate-800 p-4 rounded-2xl">
+                                        <p className="text-xs text-slate-500 mb-2">PnL Neto ARS</p>
+                                        <p className={`text-xl font-mono ${appData.globalStats.totalNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            {appData.globalStats.totalNet > 0 ? '+' : ''}{formatARS(appData.globalStats.totalNet)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Historial Top 10 */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Últimas 10 Operaciones</h3>
+                                    
+                                    <button 
+                                        onClick={handleUndo}
+                                        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-400 transition-colors bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-800"
+                                        title="Borra la última operación y restaura el balance global"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                                            <path fillRule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clipRule="evenodd" />
+                                        </svg>
+                                        Deshacer Último
+                                    </button>
+                                </div>
+                                
+                                <div className="bg-[#080808] border border-slate-800 rounded-2xl overflow-hidden">
+                                    {appData.recentOperations.length === 0 ? (
+                                        <div className="p-8 text-center text-sm text-slate-600 font-mono">
+                                            El historial está vacío.
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                                <thead className="text-xs text-slate-500 bg-[#0a0a0a] border-b border-slate-800">
+                                                    <tr>
+                                                        <th className="px-5 py-4 font-normal">Activo</th>
+                                                        <th className="px-5 py-4 font-normal">Precio</th>
+                                                        <th className="px-5 py-4 font-normal">Inversión</th>
+                                                        <th className="px-5 py-4 font-normal text-right">Resultado</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/50">
+                                                    {appData.recentOperations.map((op, i) => (
+                                                        <tr key={op.id} className="hover:bg-slate-900/30 transition-colors">
+                                                            <td className="px-5 py-4">
+                                                                <div className="font-mono text-slate-300">{op.asset}</div>
+                                                                <div className="text-[10px] text-slate-600 mt-1">{formatDate(op.date)}</div>
+                                                            </td>
+                                                            <td className="px-5 py-4 font-mono text-slate-400">{formatUSD(op.entryPrice)}</td>
+                                                            <td className="px-5 py-4 font-mono text-slate-400">{formatARS(op.investment)}</td>
+                                                            <td className="px-5 py-4 text-right">
+                                                                {op.result === 'win' ? (
+                                                                    <div className="inline-flex flex-col items-end">
+                                                                        <span className="text-emerald-400/90 text-xs font-medium bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-900/30">+12%</span>
+                                                                        <span className="text-xs font-mono text-slate-500 mt-1">+{formatARS(op.moneyImpact)}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="inline-flex flex-col items-end">
+                                                                        <span className="text-rose-400/90 text-xs font-medium bg-rose-900/20 px-2 py-0.5 rounded border border-rose-900/30">-4%</span>
+                                                                        <span className="text-xs font-mono text-slate-500 mt-1">{formatARS(op.moneyImpact)}</span>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Toast Notification Minimalista */}
+                    {toast && (
+                        <div className="fixed bottom-6 right-6 bg-[#111111] text-slate-300 px-5 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-fade-in-up z-50">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-500"></div>
+                            <p className="text-sm">{toast}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <style>
+        /* Ocultar flechas de inputs number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body>
+</html>
+```
